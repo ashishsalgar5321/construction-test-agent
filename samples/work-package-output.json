@@ -1,0 +1,106 @@
+{
+  "requirement": "A site engineer creates a work package for a safety issue and assigns it to a contractor with a due date.",
+  "parsed": {
+    "summary": "Site engineer creates and assigns a safety work package with due date",
+    "workflow": "Work Package Creation",
+    "entities": ["work package", "contractor", "due date"],
+    "roles": ["Site Engineer", "Contractor"],
+    "openproject_module": "Work Package Management"
+  },
+  "scenarios": {
+    "positive": [
+      { "id": "S-P01", "title": "Create safety work package", "description": "Valid creation flow" }
+    ],
+    "negative": [
+      { "id": "S-N01", "title": "Create without due date", "description": "Missing due date rejected" }
+    ],
+    "role_based": [
+      { "id": "S-R01", "title": "Engineer creates WP", "description": "Authorized creation", "role": "Site Engineer" }
+    ],
+    "status": [{ "id": "S-ST01", "title": "Open status on create", "description": "Default Open", "status": "Open" }],
+    "dashboard": [{ "id": "S-D01", "title": "Dashboard count updates", "description": "Open count increments" }],
+    "regression": [{ "id": "S-REG01", "title": "List filter unchanged", "description": "Existing filters work" }]
+  },
+  "testCases": {
+    "testCases": [
+      {
+        "id": "TC-001",
+        "title": "Site engineer creates safety work package",
+        "type": "positive",
+        "priority": "high",
+        "role": "Site Engineer",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-P01",
+        "preconditions": ["User logged in as Site Engineer"],
+        "steps": ["Navigate to new work package", "Enter subject and due date", "Assign contractor", "Save"],
+        "expectedResult": "Work package created with Open status"
+      },
+      {
+        "id": "TC-002",
+        "title": "Create work package without due date",
+        "type": "negative",
+        "priority": "medium",
+        "role": "Site Engineer",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-N01",
+        "preconditions": ["User logged in as Site Engineer"],
+        "steps": ["Open new work package form", "Leave due date empty", "Submit"],
+        "expectedResult": "Validation error prevents save"
+      },
+      {
+        "id": "TC-003",
+        "title": "Contractor receives assignment notification",
+        "type": "positive",
+        "priority": "medium",
+        "role": "Contractor",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-R01",
+        "preconditions": ["Work package assigned to contractor"],
+        "steps": ["Check notifications", "Open assigned work package"],
+        "expectedResult": "Assignment visible with due date"
+      },
+      {
+        "id": "TC-004",
+        "title": "Invalid assignee rejected",
+        "type": "negative",
+        "priority": "high",
+        "role": "Site Engineer",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-N01",
+        "preconditions": ["User logged in as Site Engineer"],
+        "steps": ["Select unknown assignee", "Save work package"],
+        "expectedResult": "Assignee validation error shown"
+      },
+      {
+        "id": "TC-005",
+        "title": "Dashboard open count increments",
+        "type": "dashboard",
+        "priority": "low",
+        "role": "Project Manager",
+        "openproject_reference": "Project Management",
+        "traceability": "S-D01",
+        "preconditions": ["PM on project dashboard"],
+        "steps": ["Note open count", "Create new work package", "Refresh dashboard"],
+        "expectedResult": "Open count increases by one"
+      }
+    ]
+  },
+  "testData": {
+    "project": { "id": "PRJ-101", "name": "Alpha Construction Site" },
+    "workPackage": { "id": "WP-1001", "subject": "Safety Issue - Zone A", "dueDate": "2026-06-15" },
+    "users": [
+      { "role": "Site Engineer", "email": "engineer@acme.com" },
+      { "role": "Contractor", "email": "contractor@build.com" }
+    ]
+  },
+  "skeleton": {
+    "code": "import { test, expect } from '@playwright/test';\ntest('TC-001', async ({ page }) => {\n  await page.goto('/projects/1/work_packages/new');\n  await expect(page.locator('.work-package-form')).toBeVisible();\n});"
+  },
+  "coverage": {
+    "coverageScore": 82,
+    "summary": "Core creation and assignment covered; edge cases for attachments noted.",
+    "covered": [{ "area": "Work package creation", "count": 2, "confidence": "high" }],
+    "missing": [{ "area": "Attachment upload", "reason": "Not in requirement", "risk": "low" }],
+    "risks": [{ "title": "Due date timezone", "description": "Overdue may vary by TZ", "severity": "medium" }]
+  }
+}

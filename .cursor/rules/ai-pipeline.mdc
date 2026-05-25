@@ -1,0 +1,26 @@
+---
+description: Groq AI pipeline, prompts, and normalization
+globs: lib/prompts.ts,lib/groq.ts,lib/normalize-ai.ts,lib/test-data-builder.ts,lib/skeleton-builder.ts,app/api/generate/**/*
+alwaysApply: false
+---
+
+# AI Pipeline (6 stages)
+
+1. Parser → 2. Scenarios → 3. Test Cases → **4. Test Data (local)** → **5. Skeleton (local)** → 6. Coverage
+
+Stages 4–5 use `lib/test-data-builder.ts` and `lib/skeleton-builder.ts` — not Groq calls.
+
+## Prompts
+
+- One focused prompt per AI stage in `lib/prompts.ts`.
+- Return **valid JSON only**; parse with try/catch and normalization in `lib/normalize-ai.ts`.
+- Model: `llama-3.1-8b-instant` (free tier). See `lib/groq.ts`.
+
+## Outputs
+
+- Classify test case polarity via `classifyPolarity` / `sortAndFilterTestCases`.
+- Sample outputs live in `samples/`; validate with `npm run test:validate`.
+
+## Errors
+
+Surface user-friendly messages in the dashboard; log server details without leaking API keys.

@@ -1,0 +1,27 @@
+---
+description: TypeScript standards for lib/ and shared types
+globs: lib/**/*.ts
+alwaysApply: false
+---
+
+# TypeScript — lib/
+
+## Modules
+
+| File | Role |
+|------|------|
+| `prompts.ts` | AI system/user prompts |
+| `groq.ts` | Groq client + model config |
+| `normalize-ai.ts` | JSON parse, polarity, test case enrichment |
+| `sample-requirements.ts` | 25 Quick Select workflows |
+| `test-data-builder.ts` | Stage 4 synthetic data |
+| `skeleton-builder.ts` | Stage 5 Playwright/API skeleton |
+| `onboarding.ts` | Guide localStorage state |
+| `guide-scripts.ts` | Alex dialogue lines |
+| `clerk-appearance.ts` | Clerk dark theme object |
+
+## Style
+
+- Prefer explicit types for public exports; use `type` for unions (`CaseFilter`, `GuideScene`).
+- No `any` unless unavoidable at JSON boundaries — narrow with guards in `normalize-ai.ts`.
+- Pure functions where possible; side effects only in builders that need them.

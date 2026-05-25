@@ -1,0 +1,31 @@
+---
+description: Next.js App Router and React patterns for app/
+globs: app/**/*
+alwaysApply: false
+---
+
+# Next.js & React
+
+## Server vs client
+
+- **Server components** by default in `app/`. Add `'use client'` only when using hooks, browser APIs, or event handlers.
+- Keep `page.tsx` thin; pass Clerk user data from server pages into client shells (e.g. `DashboardClient`).
+
+## Routing
+
+- Auth: `app/sign-in/[[...sign-in]]/`, `app/sign-up/[[...sign-up]]/`
+- Protected UI: `app/dashboard/` — auth enforced in `app/dashboard/page.tsx` + `middleware.ts`
+- Home splash: `app/components/HomeEntry.tsx` via `app/page.tsx`
+
+## API routes
+
+- `app/api/generate/route.ts` — authenticated SSE pipeline; do not merge AI stages into one mega-prompt (JSON truncation).
+
+## Components
+
+- One default export per file in `app/components/`.
+- Onboarding: `OnboardingGuide` + `GuideEngineer` + `GuideSpeechBubble`; persistence in `lib/onboarding.ts`.
+
+## Images
+
+Use `next/image` for static assets under `public/` (e.g. `/alex-engineer.png`).

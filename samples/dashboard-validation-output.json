@@ -1,0 +1,82 @@
+{
+  "requirement": "The project manager dashboard should show correct counts of open, overdue, and closed work packages with proper filters.",
+  "parsed": {
+    "summary": "Dashboard metrics and filters for work package counts",
+    "workflow": "Dashboard Validation",
+    "openproject_module": "Project Management"
+  },
+  "scenarios": {
+    "positive": [{ "id": "S-P01", "title": "Dashboard shows correct totals", "description": "Counts match data" }],
+    "negative": [{ "id": "S-N01", "title": "Invalid filter shows empty", "description": "No crash on bad filter" }],
+    "role_based": [{ "id": "S-R01", "title": "PM sees full dashboard", "role": "Project Manager" }],
+    "status": [{ "id": "S-ST01", "title": "Overdue highlighted", "status": "Overdue" }],
+    "dashboard": [{ "id": "S-D01", "title": "Filter by status Open", "description": "Filtered count" }],
+    "regression": [{ "id": "S-REG01", "title": "Chart loads after filter", "description": "UI stable" }]
+  },
+  "testCases": {
+    "testCases": [
+      {
+        "id": "TC-001",
+        "title": "Dashboard displays open overdue closed counts",
+        "type": "dashboard",
+        "priority": "high",
+        "role": "Project Manager",
+        "openproject_reference": "Project Management",
+        "traceability": "S-P01",
+        "steps": ["Login as PM", "Open project dashboard"],
+        "expectedResult": "Open, overdue, and closed counts match backend"
+      },
+      {
+        "id": "TC-002",
+        "title": "Apply invalid status filter",
+        "type": "negative",
+        "priority": "medium",
+        "role": "Project Manager",
+        "openproject_reference": "Project Management",
+        "traceability": "S-N01",
+        "steps": ["Select invalid filter combination"],
+        "expectedResult": "Empty state shown without error"
+      },
+      {
+        "id": "TC-003",
+        "title": "Overdue work packages highlighted",
+        "type": "status",
+        "priority": "high",
+        "role": "Project Manager",
+        "openproject_reference": "Project Management",
+        "traceability": "S-ST01",
+        "steps": ["View overdue section"],
+        "expectedResult": "Overdue items shown in red"
+      },
+      {
+        "id": "TC-004",
+        "title": "Filter dashboard by Open status",
+        "type": "dashboard",
+        "priority": "medium",
+        "role": "Project Manager",
+        "openproject_reference": "Project Management",
+        "traceability": "S-D01",
+        "steps": ["Apply Open filter"],
+        "expectedResult": "Only open work packages counted"
+      },
+      {
+        "id": "TC-005",
+        "title": "Dashboard chart reloads after filter change",
+        "type": "regression",
+        "priority": "low",
+        "role": "Project Manager",
+        "openproject_reference": "Project Management",
+        "traceability": "S-REG01",
+        "steps": ["Change filter twice"],
+        "expectedResult": "Chart updates without layout break"
+      }
+    ]
+  },
+  "testData": {
+    "dashboardMetrics": { "open": 12, "overdue": 3, "closed": 45 }
+  },
+  "skeleton": {
+    "code": "test('dashboard', async ({ page }) => { await page.goto('/projects/1'); await expect(page.locator('.dashboard-metrics')).toBeVisible(); });"
+  },
+  "coverage": { "coverageScore": 85, "summary": "Dashboard counts, filters, and overdue display covered." }
+}

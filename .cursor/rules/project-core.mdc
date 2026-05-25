@@ -1,0 +1,45 @@
+---
+description: ConstructQA core conventions — always follow for this repo
+alwaysApply: true
+---
+
+# ConstructQA Agent — Core Rules
+
+## Product
+
+AI test automation for **OpenProject-style construction workflows**. Stack: Next.js 16 App Router, Clerk auth, Groq (`llama-3.1-8b-instant`), custom CSS in `app/globals.css` (no Tailwind in components).
+
+## Before coding Next.js
+
+Read guides under `node_modules/next/dist/docs/` — this project uses **Next.js 16** with breaking API differences from older versions.
+
+## File placement
+
+| Area | Path |
+|------|------|
+| Routes & pages | `app/` |
+| Shared UI | `app/components/` |
+| API routes | `app/api/` |
+| Business logic | `lib/` |
+| Scripts | `scripts/` |
+| Docs | `docs/` |
+| Samples / tests | `samples/`, `tests/` |
+
+Use `@/` imports (maps to repo root).
+
+## Do not
+
+- Commit secrets (`.env.local`, keys). Only `.env.example` is tracked.
+- Add `framer-motion` or tags like `motion.div` — not a dependency; causes parse errors.
+- Create duplicate nested project folders.
+- Expand scope beyond the user request.
+
+## Verify before PR
+
+```bash
+npm run build
+npm run lint
+npm run test:validate
+```
+
+See `docs/DEVELOPMENT.md` and `AGENTS.md`.

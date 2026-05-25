@@ -1,0 +1,23 @@
+---
+description: React components and hooks in app/components and app/hooks
+globs: app/components/**/*,app/hooks/**/*
+alwaysApply: false
+---
+
+# Components & Hooks
+
+## Components (`app/components/`)
+
+- Default export per file; `'use client'` when using hooks or events.
+- Guide UI split: `OnboardingGuide` → `GuideEngineer` + `GuideSpeechBubble` (avoid deep nested `<div>` blocks that are easy to corrupt).
+- Auth wrapper: `AuthShell`; home flow: `HomeEntry`.
+
+## Hooks (`app/hooks/`)
+
+- Shared client hooks only (e.g. `useTypewriter.ts`).
+- Do not import server-only modules into hooks.
+
+## JSX safety
+
+- Use `<div>`, `<section>`, `<figure>` — never `motion.div` (not installed).
+- Prefer small subcomponents over 100+ line JSX trees.

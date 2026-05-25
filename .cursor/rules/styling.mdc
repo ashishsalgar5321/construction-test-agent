@@ -1,0 +1,25 @@
+---
+description: Global CSS and UI theme conventions
+globs: app/globals.css,lib/clerk-appearance.ts
+alwaysApply: false
+---
+
+# Styling
+
+## Single stylesheet
+
+All app styling is in **`app/globals.css`** (~1200 lines). Do not add Tailwind classes to JSX.
+
+## Theme
+
+- Dark construction QA UI: `#060612` background, purple accent `#7c3aed`, amber/orange for Alex guide (`#f59e0b`).
+- Clerk auth: shared theme in `lib/clerk-appearance.ts` + `.auth-*` / `.login-*` classes.
+
+## New UI
+
+- Reuse existing class names (`.gen-btn`, `.sidebar`, `.tc-card`, `.guide-*`) before inventing new ones.
+- Keep responsive breakpoints consistent with existing `@media` blocks in `globals.css`.
+
+## Alex guide
+
+Character image: `public/alex-engineer.png`. Guide styles prefixed with `.guide-` and `.engineer-`.

@@ -1,0 +1,87 @@
+{
+  "requirement": "Only authorized users with the role of Site Engineer or Project Manager can update or close safety-related work packages.",
+  "parsed": {
+    "summary": "Role-based permissions for safety work package updates",
+    "workflow": "Role-Based Access Control",
+    "roles": ["Site Engineer", "Project Manager", "Contractor", "Viewer"],
+    "openproject_module": "User & Role Management"
+  },
+  "scenarios": {
+    "positive": [{ "id": "S-P01", "title": "PM updates safety WP", "description": "Allowed update" }],
+    "negative": [{ "id": "S-N01", "title": "Viewer cannot update", "description": "Denied update" }],
+    "role_based": [
+      { "id": "S-R01", "title": "Engineer can update", "role": "Site Engineer" },
+      { "id": "S-R02", "title": "Viewer blocked", "role": "Viewer" }
+    ],
+    "status": [],
+    "dashboard": [],
+    "regression": [{ "id": "S-REG01", "title": "Other WPs unaffected", "description": "Non-safety WPs editable" }]
+  },
+  "testCases": {
+    "testCases": [
+      {
+        "id": "TC-001",
+        "title": "Project Manager updates safety work package",
+        "type": "positive",
+        "priority": "high",
+        "role": "Project Manager",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-P01",
+        "steps": ["Open safety work package", "Update status", "Save"],
+        "expectedResult": "Update succeeds"
+      },
+      {
+        "id": "TC-002",
+        "title": "Viewer tries to update safety work package",
+        "type": "negative",
+        "priority": "high",
+        "role": "Viewer",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-N01",
+        "steps": ["Open safety work package", "Attempt edit"],
+        "expectedResult": "Update button disabled or 403 error"
+      },
+      {
+        "id": "TC-003",
+        "title": "Site Engineer closes safety issue",
+        "type": "role",
+        "priority": "high",
+        "role": "Site Engineer",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-R01",
+        "steps": ["Open safety WP", "Set status Closed"],
+        "expectedResult": "Work package closed successfully"
+      },
+      {
+        "id": "TC-004",
+        "title": "Contractor cannot close safety issue",
+        "type": "negative",
+        "priority": "medium",
+        "role": "Contractor",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-R02",
+        "steps": ["Open safety WP", "Try to close"],
+        "expectedResult": "Action denied"
+      },
+      {
+        "id": "TC-005",
+        "title": "Non-safety WP still editable by contractor",
+        "type": "regression",
+        "priority": "low",
+        "role": "Contractor",
+        "openproject_reference": "Work Package Management",
+        "traceability": "S-REG01",
+        "steps": ["Open general task WP", "Update progress"],
+        "expectedResult": "Update allowed"
+      }
+    ]
+  },
+  "testData": {
+    "project": { "name": "Alpha Construction Site" },
+    "workPackage": { "subject": "Safety Issue - Zone A", "type": "SafetyIssue" }
+  },
+  "skeleton": {
+    "code": "test('RBAC', async ({ page }) => { await page.goto('/work_packages/1'); await expect(page.locator('.edit-button')).toBeVisible(); });"
+  },
+  "coverage": { "coverageScore": 88, "summary": "All four roles addressed for safety workflows." }
+}
