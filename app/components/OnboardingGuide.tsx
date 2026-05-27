@@ -1,7 +1,9 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import GuideEngineer from '@/app/components/GuideEngineer'
+import { shouldSkipAuthIntro } from '@/lib/auth-routes'
 import {
   AUTH_SIGN_IN_LINES,
   AUTH_SIGN_UP_LINES,
@@ -33,6 +35,7 @@ function getLines(scene: GuideScene): GuideLine[] {
 }
 
 export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
+  const pathname = usePathname()
   const lines = getLines(scene)
   const [visible, setVisible] = useState(false)
   const [step, setStep] = useState(0)
@@ -88,7 +91,7 @@ export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
     finish()
   }
 
-  if (!visible || lines.length === 0) return null
+  if (shouldSkipAuthIntro(pathname) || !visible || lines.length === 0) return null
 
   const message = personalizeMessage(current.message, userName)
   const pointing =

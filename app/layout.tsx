@@ -2,11 +2,12 @@ import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import './globals.css'
 import { clerkAppearance } from '@/lib/clerk-appearance'
+import { clerkLocalization } from '@/lib/clerk-localization'
 
 export const metadata: Metadata = {
-  title: 'ConstructQA Agent — AI Test Automation',
+  title: 'ConstructQA Agent — Construction Test Automation',
   description:
-    'AI-powered test automation agent for construction project management workflows using OpenProject',
+    'Test automation for construction project management workflows',
 }
 
 export default function RootLayout({
@@ -15,7 +16,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider appearance={clerkAppearance}>
+    <ClerkProvider
+      appearance={clerkAppearance}
+      localization={clerkLocalization}
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+    >
       <html lang="en" suppressHydrationWarning>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -24,9 +24,11 @@ Built for TalentServ 2-Day Agentic Programming Hackathon 2026.
 | Coverage / risk summary | Done |
 | Traceability matrix tab | Done |
 | Export MD / CSV / JSON | Done |
+| User history (saved runs) | Done |
+| Test reports (MD + JSON per run) | Done |
 | 10 tool validation cases + results | Done |
 | Sample generated outputs (3 workflows) | Done |
-| Deployed on Vercel | Done |
+| Deployed on Vercel | See [docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md) |
 | Agentic programming evidence | See AGENTS.md |
 
 ## What It Does
@@ -140,8 +142,9 @@ See [AGENTS.md](AGENTS.md) for Cursor/Claude usage across design, implementation
 
 - Groq free tier daily token limits — use `llama-3.1-8b-instant`
 - Generation takes 15–45 seconds
-- No persistent history storage (session only)
+- History/reports need `POSTGRES_URL` on Vercel (local dev uses `data/` files)
 - Test data and skeleton are template builders (not AI calls) for reliability
+- Traceability % depends on AI linking scenario IDs; re-run Generate if below 90%
 
 ## OpenProject Reference
 

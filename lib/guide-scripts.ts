@@ -23,14 +23,14 @@ export const AUTH_SIGN_UP_LINES: GuideLine[] = [
 export const HOME_LOGIN_LINES: GuideLine[] = [
   {
     message:
-      "Welcome! I'm Alex, your construction QA guide. Click 'Sign in with Google' below to get started, or create a free account if you're new here.",
+      "Welcome! I'm Alex, your construction QA guide. Sign in with email and password, or use Google below. New here? Choose Sign up.",
     actionLabel: 'Thanks, Alex!',
   },
 ]
 
 export const DASHBOARD_LINES: GuideLine[] = [
   {
-    message: `Hey ${'{name}'}! I'm Alex, your Site QA Engineer. I'll walk you through generating your first AI test suite — it only takes a minute.`,
+    message: `Hey ${'{name}'}! I'm Alex, your Site QA Engineer. I'll walk you through generating your first test suite — it only takes a minute.`,
     actionLabel: 'Show me how',
   },
   {

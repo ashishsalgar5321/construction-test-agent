@@ -1,0 +1,59 @@
+---
+description: Enforce ConstructQA UI/UX standards across modules
+globs: app/**/*,lib/**/*,docs/**/*
+alwaysApply: false
+---
+
+# ConstructQA UI Standard Rules
+
+Apply these standards in every feature and refactor:
+
+1. **Typography consistency**
+   - Use shared font tokens from `app/globals.css` (`--font-size-base`, `--font-size-sm`, `--font-size-lg`).
+   - Do not introduce ad-hoc font-size values for equivalent UI roles.
+
+2. **Highlighted border system**
+   - Cards, panels, inputs, and interactive containers must include a visible border using theme highlight tokens.
+   - Avoid borderless dark blocks that blend into the background.
+
+3. **Button standardization**
+   - Reuse shared button tokens (`--btn-primary-bg`, `--btn-primary-border`, `--btn-primary-text`).
+   - Keep button spacing, radius, and font weight consistent across modules.
+   - Prefer text labels; avoid icon-only primary actions unless paired with visible text.
+
+4. **Validation quality and refresh**
+   - Mandatory fields must have simple, meaningful error text.
+   - Validation feedback should clear/refresh immediately while users type, not only on submit.
+
+5. **Feature correctness**
+   - New or changed modules must preserve expected behavior and existing workflows.
+   - Avoid UI-only changes that regress API, auth, or data behavior.
+
+6. **Field and control spacing**
+   - Preserve consistent spacing between related fields, OTP boxes, and button groups.
+   - No cramped controls or excessive gaps.
+
+7. **Color consistency**
+   - Primary button color must stay consistent across guest + dashboard modules.
+   - Keep contrast accessible on dark backgrounds.
+
+8. **Card highlighting**
+   - Every card-like surface should have a highlighted border and subtle elevated surface treatment.
+
+9. **Wording quality**
+   - All button labels and key UI text must be meaningful, actionable, and user-friendly.
+   - Remove placeholder copy that does not help users complete tasks.
+
+10. **Authentication UX rule**
+   - Existing users sign in with password-first flow.
+   - Verification code is for sign-up verification or forgot-password/reset flows.
+   - FE copy must reflect this behavior.
+
+11. **Splash behavior rule**
+   - Show the approved splash experience when the app is opened.
+   - Keep the chosen splash visual style consistent.
+
+12. **Background completeness**
+   - Every major screen should include themed background structure (e.g., construction/building skyline).
+   - Avoid plain blank backgrounds.
+

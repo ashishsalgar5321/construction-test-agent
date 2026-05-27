@@ -236,6 +236,65 @@ export function countPolarity(cases: Record<string, unknown>[]) {
   return { total: cases.length, positive, negative }
 }
 
+/** Scenario ↔ test case linkage for Traceability tab (target ≥90% for hackathon demo). */
+export function computeTraceabilityStats(
+  scenarios: Record<string, unknown>,
+  testCases: Record<string, unknown>[]
+): {
+  scenarioCount: number
+  testCaseCount: number
+  linkedScenarios: number
+  linkedTestCases: number
+  scenarioCoveragePct: number
+  testCaseLinkagePct: number
+  unmappedScenarioIds: string[]
+  orphanTestCaseIds: string[]
+} {
+  const normalized = normalizeScenarios(scenarios)
+  const scenarioIds: string[] = []
+  for (const list of Object.values(normalized)) {
+    for (const item of list) {
+      const id = String((item as Record<string, unknown>).id ?? '').trim()
+      if (id) scenarioIds.push(id)
+    }
+  }
+
+  const scenarioSet = new Set(scenarioIds)
+  const linkedScenarioSet = new Set<string>()
+  let linkedTestCases = 0
+  const orphanTestCaseIds: string[] = []
+
+  for (const tc of testCases) {
+    const traceId = String(tc.traceability ?? '').trim()
+    const tcId = String(tc.id ?? '').trim()
+    if (traceId && scenarioSet.has(traceId)) {
+      linkedScenarioSet.add(traceId)
+      linkedTestCases++
+    } else if (tcId) {
+      orphanTestCaseIds.push(tcId)
+    }
+  }
+
+  const unmappedScenarioIds = scenarioIds.filter((id) => !linkedScenarioSet.has(id))
+  const scenarioCount = scenarioIds.length
+  const testCaseCount = testCases.length
+
+  return {
+    scenarioCount,
+    testCaseCount,
+    linkedScenarios: linkedScenarioSet.size,
+    linkedTestCases,
+    scenarioCoveragePct:
+      scenarioCount > 0
+        ? Math.round((linkedScenarioSet.size / scenarioCount) * 100)
+        : 0,
+    testCaseLinkagePct:
+      testCaseCount > 0 ? Math.round((linkedTestCases / testCaseCount) * 100) : 0,
+    unmappedScenarioIds,
+    orphanTestCaseIds,
+  }
+}
+
 /** Validate pipeline output structure for hackathon TV-* checks. */
 export function validatePipelineOutput(results: Record<string, unknown>): {
   ok: boolean

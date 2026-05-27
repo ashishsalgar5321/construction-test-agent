@@ -11,8 +11,6 @@ export const GROQ_MODELS = [
   'llama-3.3-70b-versatile',
 ].filter((m): m is string => Boolean(m))
 
-const DEFAULT_MODEL = GROQ_MODELS[0] || 'llama-3.1-8b-instant'
-
 export function getGroqClient() {
   const apiKey = process.env.GROQ_API_KEY?.trim()
   if (!apiKey) {
@@ -48,7 +46,7 @@ function isRateLimitError(err: unknown): boolean {
   return false
 }
 
-function groqErrorMessage(err: unknown, model: string): string {
+function groqErrorMessage(err: unknown): string {
   if (err && typeof err === 'object') {
     const e = err as {
       status?: number
@@ -57,26 +55,25 @@ function groqErrorMessage(err: unknown, model: string): string {
     }
     const detail = e.error?.message || e.message || ''
     if (e.status === 401) {
-      return `Invalid Groq API key (401). Create a new free key at https://console.groq.com/keys — update GROQ_API_KEY in .env.local, then restart npm run dev.`
+      return 'Invalid API key (401). Check GROQ_API_KEY in .env.local and restart the dev server.'
     }
     if (e.status === 429) {
       const waitHint = detail.match(/try again in ([^.]+)/i)?.[1]
       return (
-        `Groq rate limit on ${model}. ` +
+        `Rate limit reached. ` +
         (waitHint
-          ? `Wait ${waitHint.trim()}, or we will try another model automatically.`
-          : `Wait 60 seconds and try again.`) +
-        ` Tip: use llama-3.1-8b-instant (500K tokens/day on free tier).`
+          ? `Wait ${waitHint.trim()}, or try again shortly.`
+          : 'Wait 60 seconds and try again.')
       )
     }
     if (e.status === 413 || detail.toLowerCase().includes('too large')) {
       return 'Request too large. Try a shorter requirement.'
     }
     if (detail) return detail
-    if (e.status) return `Groq API error (${e.status})`
+    if (e.status) return `Generation service error (${e.status})`
   }
   if (err instanceof Error) return err.message
-  return 'Groq API request failed'
+  return 'Generation service request failed'
 }
 
 export function parseJsonResponse<T>(text: string): T {
@@ -142,24 +139,19 @@ export async function runGroqStage(
           ],
         })
         const content = completion.choices[0]?.message?.content
-        if (!content) throw new Error('Empty response from Groq AI')
+        if (!content) throw new Error('Empty response from generation service')
         return { content, model }
       } catch (err) {
         lastError = err
         if (isRateLimitError(err)) break
         if (useJsonMode && isJsonValidationError(err)) continue
-        if (!isRateLimitError(err)) throw new Error(groqErrorMessage(err, model))
+        if (!isRateLimitError(err)) throw new Error(groqErrorMessage(err))
       }
     }
     if (lastError && isRateLimitError(lastError)) continue
   }
 
-  throw new Error(
-    groqErrorMessage(
-      lastError,
-      modelsToTry[modelsToTry.length - 1] || DEFAULT_MODEL
-    )
-  )
+  throw new Error(groqErrorMessage(lastError))
 }
 
 export async function runGroqJson<T>(

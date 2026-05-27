@@ -1,12 +1,17 @@
 'use client'
 
-import { useState, type MouseEvent } from 'react'
-import { UserButton } from '@clerk/nextjs'
+import { useUser } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState, type MouseEvent } from 'react'
+import DashboardTopBar from '@/app/components/DashboardTopBar'
+import GuestSplashBackground from '@/app/components/GuestSplashBackground'
+import { getClerkDisplayName } from '@/lib/clerk-user'
 import {
   asObjectArray,
   asStringArray,
   buildScenarioTitleMap,
   classifyPolarity,
+  computeTraceabilityStats,
   countPolarity,
   enrichTestCase,
   extractTestCases,
@@ -47,6 +52,42 @@ const SCENARIO_TYPES = [
   'dashboard',
 ] as const
 
+const OPENPROJECT_BASE_URL = process.env.NEXT_PUBLIC_OPENPROJECT_URL?.trim() || ''
+
+const OPENPROJECT_MODULE_LINKS = [
+  {
+    label: 'OpenProject',
+    path: '/',
+    fallback: 'https://www.openproject.org/',
+  },
+  {
+    label: 'Work Packages',
+    path: '/work_packages',
+    fallback: 'https://www.openproject.org/docs/user-guide/work-packages/',
+  },
+  {
+    label: 'Projects',
+    path: '/projects',
+    fallback: 'https://www.openproject.org/docs/user-guide/projects/',
+  },
+  {
+    label: 'Meetings',
+    path: '/meetings',
+    fallback: 'https://www.openproject.org/docs/user-guide/meetings/',
+  },
+  {
+    label: 'Time Tracking',
+    path: '/time_entries',
+    fallback: 'https://www.openproject.org/docs/user-guide/time-and-costs/time-tracking/',
+  },
+] as const
+
+function openProjectLink(path: string, fallback: string): string {
+  if (!OPENPROJECT_BASE_URL) return fallback
+  const normalized = OPENPROJECT_BASE_URL.replace(/\/+$/, '')
+  return `${normalized}${path}`
+}
+
 interface Props {
   userName: string
   userLastName: string
@@ -60,7 +101,11 @@ export default function DashboardClient({
   userLastName,
   userEmail,
 }: Props) {
-  const displayName = [userName, userLastName].filter(Boolean).join(' ') || 'Engineer'
+  const { user } = useUser()
+  const displayName =
+    (user ? getClerkDisplayName(user) : null) ||
+    [userName, userLastName].filter(Boolean).join(' ') ||
+    'Engineer'
 
   const [requirement, setRequirement] = useState(SAMPLES[0].value)
   const [activeTab, setActiveTab] = useState(0)
@@ -72,8 +117,57 @@ export default function DashboardClient({
   const [generated, setGenerated] = useState(false)
   const [error, setError] = useState('')
   const [copyMsg, setCopyMsg] = useState('')
+  const [saveMsg, setSaveMsg] = useState('')
   const [caseFilter, setCaseFilter] = useState<CaseFilter>('all')
   const [sortOrder, setSortOrder] = useState<SortOrder>('positive-first')
+  const searchParams = useSearchParams()
+
+  const persistRun = useCallback(
+    async (req: string, resultMap: ResultMap) => {
+      try {
+        const res = await fetch('/api/runs', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requirement: req, results: resultMap }),
+        })
+        if (!res.ok) return
+        setSaveMsg('Saved to History & Reports.')
+        window.setTimeout(() => setSaveMsg(''), 5000)
+      } catch {
+        /* non-blocking */
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    const runId = searchParams.get('runId')
+    if (!runId) return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/runs/${encodeURIComponent(runId)}`, {
+          credentials: 'same-origin',
+        })
+        if (!res.ok || cancelled) return
+        const data = (await res.json()) as { run: { requirement: string; results: ResultMap } }
+        setRequirement(data.run.requirement)
+        setResults(data.run.results)
+        setGenerated(true)
+        setActiveTab(0)
+        setSaveMsg('Loaded from history.')
+        window.setTimeout(() => setSaveMsg(''), 4000)
+      } catch {
+        if (!cancelled) setError('Could not load that saved run.')
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams])
 
   const selectSample = (i: number) => {
     setActiveSample(i)
@@ -84,7 +178,7 @@ export default function DashboardClient({
   const generate = async () => {
     const trimmed = requirement.trim()
     if (!trimmed) {
-      setError('Please enter or select a construction workflow requirement first.')
+      setError('Add a workflow requirement above, or pick one from Quick Select.')
       return
     }
 
@@ -93,7 +187,7 @@ export default function DashboardClient({
     setGenerated(false)
     setResults({})
     setCurrentStep(0)
-    setStatusMsg('Starting AI pipeline…')
+    setStatusMsg('Starting test pipeline…')
 
     try {
       const res = await fetch('/api/generate', {
@@ -116,6 +210,7 @@ export default function DashboardClient({
       const decoder = new TextDecoder()
       let buffer = ''
       let completed = false
+      let accumulated: ResultMap = {}
 
       while (true) {
         const { done, value } = await reader.read()
@@ -151,7 +246,8 @@ export default function DashboardClient({
             setCaseFilter('all')
             setSortOrder('positive-first')
           } else {
-            setResults((prev) => ({ ...prev, [json.stage]: json.data }))
+            accumulated = { ...accumulated, [json.stage]: json.data }
+            setResults(accumulated)
           }
         }
       }
@@ -159,12 +255,16 @@ export default function DashboardClient({
       if (!completed) {
         setError((prev) =>
           prev ||
-          'Generation stopped early. Wait 60 seconds (Groq limit) and click Generate again.'
+          'Generation stopped early. Wait 60 seconds (rate limit) and click Generate again.'
         )
+      } else {
+        void persistRun(trimmed, accumulated)
       }
     } catch (e) {
       setGenerated(false)
-      setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+      setError(
+        e instanceof Error ? e.message : 'We could not generate tests. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
@@ -300,7 +400,7 @@ export default function DashboardClient({
           `Saved ${fileName} — open it from your Downloads folder (not in the browser tab).`
         )
       } catch {
-        setError('Export failed. Please try again.')
+        setError('Export did not complete. Please try again.')
       }
       setTimeout(() => setCopyMsg(''), 5000)
     }
@@ -330,41 +430,31 @@ export default function DashboardClient({
   }
 
   const hasResults = generated && testCases.length > 0
+  const traceStats = computeTraceabilityStats(
+    (results.scenarios as ResultMap) || {},
+    testCases
+  )
 
   return (
     <div className="app-shell">
-      <nav className="topnav">
-        <div className="nav-logo">
-          <div className="logo-icon">⚡</div>
-          <div>
-            <div className="logo-name">ConstructQA Agent</div>
-            <div className="logo-sub">Powered by Groq AI · OpenProject</div>
-          </div>
-        </div>
-        <div className="nav-pills">
-          {['Dashboard', 'History', 'Reports'].map((n, i) => (
-            <div key={n} className={`nav-pill ${i === 0 ? 'active' : ''}`}>
-              {n}
-            </div>
-          ))}
-        </div>
-        <div className="nav-right">
-          <div className="ai-status">
-            <span className="status-dot" />
-            AI Ready
-          </div>
-          <span className="user-name" title={userEmail}>
-            {displayName}
-          </span>
-          <UserButton />
-        </div>
-      </nav>
+      <DashboardTopBar
+        active="dashboard"
+        fallbackName={displayName}
+        fallbackEmail={userEmail}
+        statusLabel={loading ? 'Generating…' : 'Ready'}
+      />
+
+      <div className="dashboard-splash-bg" aria-hidden>
+        <GuestSplashBackground />
+      </div>
 
       <div className="main-layout">
         <aside className="sidebar">
           <div className="s-section">
             <div className="s-label">Requirement Input</div>
-            <div className={`req-box ${loading ? 'loading' : ''}`}>
+            <div
+              className={`req-box ${loading ? 'loading' : ''} ${error ? 'input-invalid' : ''}`}
+            >
               <textarea
                 value={requirement}
                 onChange={(e) => {
@@ -373,15 +463,37 @@ export default function DashboardClient({
                 }}
                 placeholder="Describe your construction workflow requirement…"
                 rows={4}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'requirement-error' : undefined}
               />
               <div className="req-footer">
                 <span className="char-count">{requirement.length} chars</span>
-                <span className="req-tag">OpenProject</span>
+                <div className="req-openproject-links">
+                  {OPENPROJECT_MODULE_LINKS.map((item) => (
+                    <a
+                      key={item.label}
+                      className="req-tag req-tag-link"
+                      href={openProjectLink(item.path, item.fallback)}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      title={
+                        OPENPROJECT_BASE_URL
+                          ? `Open ${item.label} in your OpenProject instance`
+                          : `Open ${item.label} docs (set NEXT_PUBLIC_OPENPROJECT_URL for your instance)`
+                      }
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
+            {error && (
+              <p id="requirement-error" className="field-error" role="alert">
+                {error}
+              </p>
+            )}
           </div>
-
-          {error && <div className="alert-error">{error}</div>}
 
           <div className="s-section" id="guide-quick-select">
             <div className="s-label">Quick Select ({SAMPLES.length} workflows)</div>
@@ -556,7 +668,7 @@ export default function DashboardClient({
                     <div className="empty-icon">⚠️</div>
                     <div className="empty-title">No test cases generated</div>
                     <div className="empty-sub">
-                      The AI did not return test cases for this requirement.
+                      No test cases were returned for this requirement.
                       Try clicking Generate again or rephrase the requirement.
                     </div>
                   </div>
@@ -825,34 +937,68 @@ export default function DashboardClient({
                 <div className="tc-card">
                   <div className="tc-head">
                     <div className="tc-title">Requirement → Scenario → Test Case</div>
-                    <span className="type-badge type-role">Traceability Matrix</span>
+                    <span
+                      className={`type-badge ${traceStats.scenarioCoveragePct >= 90 ? 'type-pos' : 'type-neg'}`}
+                    >
+                      Traceability {traceStats.scenarioCoveragePct}%
+                    </span>
                   </div>
-                  <div className="tc-body" style={{ overflowX: 'auto' }}>
-                    <table className="trace-table">
-                      <thead>
-                        <tr>
-                          <th>Test Case</th>
-                          <th>Scenario ID</th>
-                          <th>Type</th>
-                          <th>Role</th>
-                          <th>OpenProject</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {testCases.map((tc, i) => {
-                          const c = tc as ResultMap
-                          return (
-                            <tr key={String(c.id) || i}>
-                              <td>{String(c.id)}</td>
-                              <td>{String(c.traceability)}</td>
-                              <td>{String(c.type)}</td>
-                              <td>{String(c.role)}</td>
-                              <td>{String(c.openproject_reference)}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                  <div className="tc-body">
+                    <div className="trace-summary">
+                      <p>
+                        <strong>{traceStats.linkedScenarios}</strong> of{' '}
+                        <strong>{traceStats.scenarioCount}</strong> scenarios mapped to test
+                        cases ({traceStats.testCaseCount} total). Test-case linkage:{' '}
+                        <strong>{traceStats.testCaseLinkagePct}%</strong>. Hackathon target:{' '}
+                        <strong>≥90%</strong> scenario coverage.
+                      </p>
+                      {String(parsed.summary ?? '').trim() && (
+                        <p className="trace-req-line">
+                          <strong>Requirement:</strong> {String(parsed.summary)}
+                        </p>
+                      )}
+                      {traceStats.unmappedScenarioIds.length > 0 && (
+                        <p className="trace-gap">
+                          Unmapped scenarios:{' '}
+                          {traceStats.unmappedScenarioIds.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="trace-table">
+                        <thead>
+                          <tr>
+                            <th>Test Case</th>
+                            <th>Scenario</th>
+                            <th>Scenario ID</th>
+                            <th>Type</th>
+                            <th>Role</th>
+                            <th>OpenProject</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {enrichedCases.map((tc, i) => {
+                            const c = tc as ResultMap
+                            const traceId = String(c.traceability ?? '').trim()
+                            const mapped =
+                              traceId &&
+                              !traceStats.unmappedScenarioIds.includes(traceId)
+                                ? 'trace-mapped'
+                                : 'trace-unmapped'
+                            return (
+                              <tr key={String(c.id) || i} className={mapped}>
+                                <td>{String(c.id)}</td>
+                                <td>{String(c.scenarioName ?? '—')}</td>
+                                <td>{traceId || '—'}</td>
+                                <td>{String(c.type)}</td>
+                                <td>{String(c.role)}</td>
+                                <td>{String(c.openproject_reference)}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -861,6 +1007,7 @@ export default function DashboardClient({
 
           {generated && (
             <div className="export-bar">
+              {saveMsg && <span className="alert-success">{saveMsg}</span>}
               {copyMsg && <span className="alert-success">{copyMsg}</span>}
               <button
                 type="button"

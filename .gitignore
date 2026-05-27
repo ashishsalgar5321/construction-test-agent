@@ -43,3 +43,6 @@ next-env.d.ts
 
 # accidental nested copy of repo
 /construction-test-agent/
+
+# local history/reports (when Postgres is not configured)
+/data/

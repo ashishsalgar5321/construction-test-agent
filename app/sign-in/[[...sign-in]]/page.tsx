@@ -1,23 +1,27 @@
-import { SignIn } from '@clerk/nextjs'
+import { Suspense } from 'react'
+import AuthOAuthAlert from '@/app/components/AuthOAuthAlert'
+import AuthPasswordRules from '@/app/components/AuthPasswordRules'
 import AuthShell from '@/app/components/AuthShell'
+import SignInFlowRouter from '@/app/components/SignInFlowRouter'
 import OnboardingGuide from '@/app/components/OnboardingGuide'
-import { clerkAppearance } from '@/lib/clerk-appearance'
 
 export default function SignInPage() {
   return (
     <>
-      <AuthShell
-        title="Welcome back"
-        subtitle="Sign in to generate AI test suites for your construction workflows."
-      >
-        <SignIn
-          appearance={clerkAppearance}
-          routing="path"
-          path="/sign-in"
-          signUpUrl="/sign-up"
-          forceRedirectUrl="/dashboard"
-          fallbackRedirectUrl="/dashboard"
-        />
+      <AuthShell mode="sign-in">
+        <Suspense fallback={null}>
+          <AuthOAuthAlert />
+        </Suspense>
+        <AuthPasswordRules />
+        <SignInFlowRouter />
+        <p className="auth-forgot-row">
+          <a className="auth-forgot-link" href="/sign-in/forgot-password">
+            Forgot password?
+          </a>
+        </p>
+        <p className="auth-signin-note">
+          Use your registered password to sign in. Use <strong>Forgot password</strong> only when you need a reset code.
+        </p>
       </AuthShell>
       <OnboardingGuide scene="sign-in" />
     </>

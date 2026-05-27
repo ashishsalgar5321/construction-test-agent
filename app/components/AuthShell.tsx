@@ -1,41 +1,37 @@
-import Link from 'next/link'
 import type { ReactNode } from 'react'
+import AuthCard from '@/app/components/AuthCard'
+import AuthClerkWrap from '@/app/components/AuthClerkWrap'
+import AuthPageGate from '@/app/components/AuthPageGate'
+import AuthShellHeading from '@/app/components/AuthShellHeading'
+import AuthVerifyLayout from '@/app/components/AuthVerifyLayout'
+import ConstructBrandMark from '@/app/components/ConstructBrandMark'
+import GuestSplashBackground from '@/app/components/GuestSplashBackground'
+import RotatingTagline from '@/app/components/RotatingTagline'
+import type { AuthMode } from '@/lib/auth-headings'
 
 interface Props {
-  title: string
-  subtitle: string
   children: ReactNode
+  mode?: AuthMode
 }
 
-export default function AuthShell({ title, subtitle, children }: Props) {
+export default function AuthShell({ children, mode = 'sign-in' }: Props) {
   return (
-    <main className="auth-page">
-      <div className="auth-aurora" />
-      <div className="auth-orb1" />
-      <div className="auth-orb2" />
-      <div className="auth-grid" />
+    <main
+      className={`auth-page guest-surface auth-page-${mode === 'sign-up' ? 'signup' : 'signin'}`}
+    >
+      <GuestSplashBackground />
 
-      <div className="auth-shell">
-        <Link href="/" className="auth-back">
-          ← Back to home
-        </Link>
-
-        <div className="auth-brand">
-          <div className="auth-brand-icon">🏗️</div>
-          <div>
-            <div className="auth-brand-name">ConstructQA Agent</div>
-            <div className="auth-brand-sub">OpenProject · Construction QA</div>
-          </div>
-        </div>
-
-        <div className="auth-heading">
-          <h1 className="auth-title">{title}</h1>
-          <p className="auth-subtitle">{subtitle}</p>
-        </div>
-
-        <div className="auth-clerk-wrap">{children}</div>
-
-        <p className="auth-footer">TalentServ Hackathon 2026 · Secure Clerk Auth</p>
+      <div className={`auth-shell auth-shell-${mode}`}>
+        <AuthPageGate>
+          <ConstructBrandMark size="compact" />
+          <RotatingTagline className="auth-tagline" />
+          <AuthShellHeading mode={mode} />
+          <AuthVerifyLayout>
+            <AuthCard mode={mode}>
+              <AuthClerkWrap>{children}</AuthClerkWrap>
+            </AuthCard>
+          </AuthVerifyLayout>
+        </AuthPageGate>
       </div>
     </main>
   )
