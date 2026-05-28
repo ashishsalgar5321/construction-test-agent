@@ -20,6 +20,14 @@ export const AUTH_SIGN_UP_LINES: GuideLine[] = [
   },
 ]
 
+export const AUTH_SIGN_UP_VERIFY_LINES: GuideLine[] = [
+  {
+    message:
+      "Almost there! I'm Alex — check your email for the verification code, enter it here, then you'll set your password on the next step.",
+    actionLabel: 'Got it',
+  },
+]
+
 export const HOME_LOGIN_LINES: GuideLine[] = [
   {
     message:

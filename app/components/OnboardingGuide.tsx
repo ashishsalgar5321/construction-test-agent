@@ -1,25 +1,37 @@
 'use client'
 
+import { useAuth, useUser } from '@clerk/nextjs'
 import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import GuideEngineer from '@/app/components/GuideEngineer'
-import { shouldSkipAuthIntro } from '@/lib/auth-routes'
+import { shouldHideGuideForAuthPath } from '@/lib/auth-routes'
 import {
   AUTH_SIGN_IN_LINES,
   AUTH_SIGN_UP_LINES,
+  AUTH_SIGN_UP_VERIFY_LINES,
   DASHBOARD_LINES,
   HOME_LOGIN_LINES,
   personalizeMessage,
   type GuideLine,
 } from '@/lib/guide-scripts'
-import { isGuideComplete, markGuideComplete, type GuideScene } from '@/lib/onboarding'
+import {
+  isGuideComplete,
+  isRecentlyCreatedAccount,
+  markGuideComplete,
+  type GuideScene,
+} from '@/lib/onboarding'
 
 interface Props {
   scene: GuideScene
   userName?: string
 }
 
-function getLines(scene: GuideScene): GuideLine[] {
+function getLines(scene: GuideScene, pathname: string): GuideLine[] {
+  const path = pathname.toLowerCase()
+  if (scene === 'sign-up' && (path.includes('verify') || path.includes('factor'))) {
+    return AUTH_SIGN_UP_VERIFY_LINES
+  }
   switch (scene) {
     case 'home':
       return HOME_LOGIN_LINES
@@ -35,20 +47,31 @@ function getLines(scene: GuideScene): GuideLine[] {
 }
 
 export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
-  const pathname = usePathname()
-  const lines = getLines(scene)
+  const pathname = usePathname() ?? ''
+  const { isLoaded: authLoaded, userId } = useAuth()
+  const { user } = useUser()
+  const lines = getLines(scene, pathname)
   const [visible, setVisible] = useState(false)
   const [step, setStep] = useState(0)
-  const [spotRect, setSpotRect] = useState<DOMRect | null>(null)
+
+  const storageUserId = userId ?? 'guest'
+  const isNewAccount =
+    scene === 'dashboard' && isRecentlyCreatedAccount(user?.createdAt ?? null)
+
+  useEffect(() => {
+    if (scene === 'dashboard' && !authLoaded) return
+    if (shouldHideGuideForAuthPath(pathname)) return
+    if (isGuideComplete(scene, storageUserId)) return
+
+    const delay = scene === 'dashboard' ? (isNewAccount ? 600 : 900) : 500
+    const timer = window.setTimeout(() => setVisible(true), delay)
+    return () => window.clearTimeout(timer)
+  }, [scene, pathname, storageUserId, authLoaded, isNewAccount])
 
   const current = lines[step]
   const highlightId = current?.highlightId
 
-  useEffect(() => {
-    if (isGuideComplete(scene)) return
-    const timer = window.setTimeout(() => setVisible(true), scene === 'dashboard' ? 900 : 500)
-    return () => window.clearTimeout(timer)
-  }, [scene])
+  const [spotRect, setSpotRect] = useState<DOMRect | null>(null)
 
   useEffect(() => {
     if (!visible || !highlightId) return
@@ -79,9 +102,9 @@ export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
   }, [visible, highlightId, step])
 
   const finish = useCallback(() => {
-    markGuideComplete(scene)
+    markGuideComplete(scene, storageUserId)
     setVisible(false)
-  }, [scene])
+  }, [scene, storageUserId])
 
   const handleAction = () => {
     if (step < lines.length - 1) {
@@ -91,7 +114,11 @@ export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
     finish()
   }
 
-  if (shouldSkipAuthIntro(pathname) || !visible || lines.length === 0) return null
+  if (shouldHideGuideForAuthPath(pathname) || !visible || lines.length === 0) {
+    return null
+  }
+
+  if (typeof document === 'undefined') return null
 
   const message = personalizeMessage(current.message, userName)
   const pointing =
@@ -111,7 +138,7 @@ export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
         }
       : undefined
 
-  return (
+  const content = (
     <>
       {spotlightStyle && (
         <>
@@ -133,6 +160,6 @@ export default function OnboardingGuide({ scene, userName = 'there' }: Props) {
       </div>
     </>
   )
+
+  return createPortal(content, document.body)
 }
-
-
