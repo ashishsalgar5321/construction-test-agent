@@ -1,6 +1,9 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { getRunsStore } from '@/lib/storage'
+import { storageErrorMessage } from '@/lib/storage/api-error'
+import { getRunsStore, storageWarning } from '@/lib/storage'
+
+export const runtime = 'nodejs'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -11,13 +14,22 @@ export async function GET(_req: Request, { params }: Params) {
   }
 
   const { id } = await params
-  const store = getRunsStore()
-  const run = await store.getRun(userId, id)
-  if (!run) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
 
-  return NextResponse.json({ run })
+  try {
+    const store = getRunsStore()
+    const run = await store.getRun(userId, id)
+    if (!run) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ run, warning: storageWarning() })
+  } catch (err) {
+    console.error('[GET /api/runs/:id]', err)
+    return NextResponse.json(
+      { error: 'Could not load run', detail: storageErrorMessage(err) },
+      { status: 503 }
+    )
+  }
 }
 
 export async function DELETE(_req: Request, { params }: Params) {
@@ -27,11 +39,20 @@ export async function DELETE(_req: Request, { params }: Params) {
   }
 
   const { id } = await params
-  const store = getRunsStore()
-  const ok = await store.deleteRun(userId, id)
-  if (!ok) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  }
 
-  return NextResponse.json({ ok: true })
+  try {
+    const store = getRunsStore()
+    const ok = await store.deleteRun(userId, id)
+    if (!ok) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error('[DELETE /api/runs/:id]', err)
+    return NextResponse.json(
+      { error: 'Could not delete run', detail: storageErrorMessage(err) },
+      { status: 503 }
+    )
+  }
 }

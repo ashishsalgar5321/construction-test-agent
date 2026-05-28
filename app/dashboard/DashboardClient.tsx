@@ -131,11 +131,20 @@ export default function DashboardClient({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ requirement: req, results: resultMap }),
         })
-        if (!res.ok) return
+        if (!res.ok) {
+          const data = (await res.json().catch(() => ({}))) as {
+            error?: string
+            detail?: string
+          }
+          setError(
+            data.detail || data.error || 'Could not save to History & Reports.'
+          )
+          return
+        }
         setSaveMsg('Saved to History & Reports.')
         window.setTimeout(() => setSaveMsg(''), 5000)
       } catch {
-        /* non-blocking */
+        setError('Could not save to History & Reports.')
       }
     },
     []

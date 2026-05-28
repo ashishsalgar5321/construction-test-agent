@@ -36,10 +36,19 @@ export default function HistoryClient({ userName, userEmail }: Props) {
     setError('')
     try {
       const res = await fetch('/api/runs', { credentials: 'same-origin' })
-      if (!res.ok) throw new Error('Could not load history')
-      const data = (await res.json()) as { runs: TestRun[]; storage?: string }
+      const data = (await res.json()) as {
+        runs?: TestRun[]
+        storage?: string
+        warning?: string | null
+        error?: string
+        detail?: string
+      }
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || 'Could not load history')
+      }
       setRuns(data.runs || [])
       setStorage(data.storage || '')
+      if (data.warning) setError(data.warning)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load history')
     } finally {

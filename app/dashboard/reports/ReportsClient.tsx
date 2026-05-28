@@ -22,11 +22,20 @@ export default function ReportsClient({ userName, userEmail, highlightRunId }: P
     setError('')
     try {
       const res = await fetch('/api/reports', { credentials: 'same-origin' })
-      if (!res.ok) throw new Error('Could not load reports')
-      const data = (await res.json()) as { reports: TestReport[]; storage?: string }
+      const data = (await res.json()) as {
+        reports?: TestReport[]
+        storage?: string
+        warning?: string | null
+        error?: string
+        detail?: string
+      }
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || 'Could not load reports')
+      }
       const list = data.reports || []
       setStorage(data.storage || '')
       setReports(list)
+      if (data.warning) setError(data.warning)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load reports')
     } finally {

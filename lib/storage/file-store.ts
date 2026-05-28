@@ -11,7 +11,11 @@ import type {
   TestRun,
 } from '@/lib/types/run'
 
-const DATA_ROOT = path.join(process.cwd(), 'data')
+/** Vercel serverless: only /tmp is writable; local dev uses project data/ */
+const DATA_ROOT =
+  process.env.VERCEL === '1'
+    ? path.join('/tmp', 'constructqa-data')
+    : path.join(process.cwd(), 'data')
 const RUNS_DIR = path.join(DATA_ROOT, 'runs')
 const REPORTS_DIR = path.join(DATA_ROOT, 'reports')
 
