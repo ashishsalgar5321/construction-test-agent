@@ -131,6 +131,7 @@ See [AGENTS.md](AGENTS.md) for Cursor/Claude usage across design, implementation
 | [docs/FOLDER-STRUCTURE.md](docs/FOLDER-STRUCTURE.md) | Standard repo layout |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design & pipeline |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Local dev, scripts, pre-push checklist |
+| [docs/submission/README.md](docs/submission/README.md) | Final submission document pack for judges |
 | [AGENTS.md](AGENTS.md) | AI agent rules & hackathon evidence |
 
 ## Cursor AI (rules & skills)

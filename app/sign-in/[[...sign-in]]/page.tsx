@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import AuthOAuthAlert from '@/app/components/AuthOAuthAlert'
 import AuthPasswordRules from '@/app/components/AuthPasswordRules'
 import AuthShell from '@/app/components/AuthShell'
@@ -15,9 +16,9 @@ export default function SignInPage() {
         <AuthPasswordRules />
         <SignInFlowRouter />
         <p className="auth-forgot-row">
-          <a className="auth-forgot-link" href="/sign-in/forgot-password">
+          <Link className="auth-forgot-link" href="/sign-in/forgot-password">
             Forgot password?
-          </a>
+          </Link>
         </p>
         <p className="auth-signin-note">
           Use your registered password to sign in. Use <strong>Forgot password</strong> only when you need a reset code.

@@ -1317,22 +1317,32 @@ button.cl-menuItem:hover {
   border: 1px solid #7c3aed40;
   border-left: 3px solid #a78bfa;
   border-radius: 8px;
+  box-sizing: border-box;
+  text-align: left;
 }
 .password-rules-title {
   color: #e9d5ff;
   font-size: 11px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin: 0 0 4px;
+  padding: 0;
+  text-align: left;
 }
 .password-rules-list {
   margin: 0;
-  padding-left: 16px;
+  padding: 0 0 0 14px;
   color: #cbd5e1;
   font-size: 11px;
   line-height: 1.45;
+  list-style-position: outside;
+  text-align: left;
 }
 .password-rules-list li {
-  margin-bottom: 2px;
+  display: list-item;
+  width: 100%;
+  margin: 0 0 2px;
+  padding: 0;
+  text-align: left;
   transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 .password-rules-list li.rule-neutral {
@@ -1347,9 +1357,11 @@ button.cl-menuItem:hover {
   text-shadow: 0 0 10px #f8717140;
 }
 .password-rules-summary {
-  margin-top: 6px;
+  margin: 6px 0 0;
+  padding: 0;
   font-size: 11px;
   font-weight: 600;
+  text-align: left;
 }
 .password-rules-summary.ok {
   color: #34d399;
@@ -1357,18 +1369,88 @@ button.cl-menuItem:hover {
 .password-rules-summary.pending {
   color: #fbbf24;
 }
+.constructqa-password-rules-host {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  clear: both !important;
+}
+.auth-clerk-wrap .cl-formFieldRow:has(input[type='password']) .cl-formFieldLabelRow {
+  margin: 0 0 4px !important;
+  padding: 0 1px !important;
+  min-height: auto !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+.auth-clerk-wrap .cl-formFieldRow:has(.constructqa-password-rules-host) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  row-gap: 4px !important;
+}
+.auth-clerk-wrap .cl-formFieldRow:has(.constructqa-password-rules-host) .cl-formFieldInputGroup {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+}
+.auth-clerk-wrap .cl-formFieldRow:has(.constructqa-password-rules-host) .cl-formFieldInput {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  width: 100% !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+.auth-clerk-wrap .constructqa-password-rules-host .password-rules,
+.auth-clerk-wrap .constructqa-password-rules-host .password-rules-title,
+.auth-clerk-wrap .constructqa-password-rules-host .password-rules-list,
+.auth-clerk-wrap .constructqa-password-rules-host .password-rules-list li,
+.auth-clerk-wrap .constructqa-password-rules-host .password-rules-summary {
+  text-align: left !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+}
 .auth-password-rules-inline {
   width: 100%;
-  margin: 8px 0 0;
+  margin: 0 !important;
 }
 .auth-page-signup .auth-password-rules-inline {
-  margin-top: 10px;
+  margin-top: 0 !important;
 }
-/* Hide duplicate Clerk password hint when our rules panel is shown */
+.auth-page-signup .constructqa-password-rules-host .password-rules {
+  margin: 0 0 var(--auth-field-gap) !important;
+  padding: 6px 10px !important;
+}
+/* Hide duplicate Clerk password feedback when our rules panel is shown */
+.auth-clerk-wrap:has(.constructqa-password-rules-host) .cl-formFieldRow:has(input[type='password']) .cl-formFieldHintText,
+.auth-clerk-wrap:has(.constructqa-password-rules-host) .cl-formFieldRow:has(input[type='password']) .clerk-field-hint,
+.auth-clerk-wrap:has(.constructqa-password-rules-host) .cl-formFieldRow:has(input[type='password']) .cl-formFieldError,
+.auth-clerk-wrap:has(.constructqa-password-rules-host) .cl-formFieldRow:has(input[type='password']) .cl-formFieldSuccessText,
+.auth-clerk-wrap:has(.constructqa-password-rules-host) .cl-formFieldRow:has(input[type='password']) .cl-formFieldWarningText,
 .auth-clerk-wrap:has(.auth-password-rules-inline) .cl-formFieldHintText {
   display: none !important;
   margin: 0 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
   height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+}
+.auth-clerk-wrap:has(.constructqa-password-rules-host) .cl-formFieldRow:has(input[type='password']) {
+  margin-bottom: var(--auth-field-gap) !important;
+  row-gap: 4px !important;
+  gap: 4px !important;
 }
 .auth-forgot-row {
   margin: 8px 0 0;
@@ -3235,6 +3317,19 @@ button.link-btn {
   margin-top: 8px;
   color: var(--text-muted);
   font-size: 12px;
+}
+.auth-signup-success {
+  width: 100%;
+  padding: 8px 0;
+}
+.auth-signup-success .field-success {
+  margin-top: 0;
+  padding: 12px 14px;
+  border: 1px solid #34d39955;
+  border-left: 3px solid #34d399;
+  border-radius: 10px;
+  background: #34d3991a;
+  text-align: center;
 }
 .manual-reset {
   width: 100%;

@@ -46,3 +46,5 @@ next-env.d.ts
 
 # local history/reports (when Postgres is not configured)
 /data/
+
+.vercel

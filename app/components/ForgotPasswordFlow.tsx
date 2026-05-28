@@ -222,6 +222,7 @@ export default function ForgotPasswordFlow() {
           </div>
 
           <PasswordRulesPanel className="auth-password-rules-inline" />
+
           <div id="clerk-captcha" className="manual-signup-captcha" />
 
           <button
