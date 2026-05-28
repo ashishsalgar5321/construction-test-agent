@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { clerkSignUpProps } from '@/lib/clerk-auth-config'
 import { clerkGuestAppearance } from '@/lib/clerk-guest-appearance'
+import { queueDashboardGuideForNewUser } from '@/lib/onboarding'
 
 export default function SignUpFlowRouter() {
   const { isLoaded, isSignedIn } = useAuth()
@@ -15,6 +16,7 @@ export default function SignUpFlowRouter() {
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !isSignUpPath) return
+    queueDashboardGuideForNewUser()
     const id = window.setTimeout(() => {
       router.replace('/dashboard')
     }, 1800)

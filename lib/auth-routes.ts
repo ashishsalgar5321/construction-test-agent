@@ -9,21 +9,19 @@ export function shouldSkipAuthIntro(pathname: string | null): boolean {
   )
 }
 
-/** Hide Alex on these auth sub-routes (not on sign-up email verification). */
+/** Hide Alex only on recovery/OAuth handshakes — keep visible through full sign-up. */
 export function shouldHideGuideForAuthPath(pathname: string | null): boolean {
   if (!pathname) return false
   const path = pathname.toLowerCase()
-  if (path.includes('/sign-up') && (path.includes('verify') || path.includes('factor'))) {
-    return false
+  if (path.includes('/sign-up')) {
+    return path.includes('sso-callback')
   }
   return (
     path.includes('sso-callback') ||
-    path.includes('/continue') ||
-    path.includes('verify') ||
-    path.includes('factor-one') ||
-    path.includes('factor-two') ||
     path.includes('reset-password') ||
-    path.includes('forgot-password')
+    path.includes('forgot-password') ||
+    (path.includes('/sign-in') &&
+      (path.includes('factor-one') || path.includes('factor-two')))
   )
 }
 

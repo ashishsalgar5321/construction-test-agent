@@ -28,6 +28,14 @@ export const AUTH_SIGN_UP_VERIFY_LINES: GuideLine[] = [
   },
 ]
 
+export const AUTH_SIGN_UP_CONTINUE_LINES: GuideLine[] = [
+  {
+    message:
+      "Great progress! I'm Alex — create a strong password below. Match all the rules, then you'll land on the dashboard where I'll show you how to generate your first test suite.",
+    actionLabel: 'Got it',
+  },
+]
+
 export const HOME_LOGIN_LINES: GuideLine[] = [
   {
     message:

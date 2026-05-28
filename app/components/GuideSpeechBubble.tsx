@@ -38,6 +38,7 @@ export function GuideSpeechBubble({
             alt=""
             width={36}
             height={36}
+            unoptimized
             className="guide-speech-avatar-img"
           />
         </span>

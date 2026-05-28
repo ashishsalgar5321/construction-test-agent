@@ -54,6 +54,7 @@ export default function GuideEngineer({
             height={compact ? 160 : 200}
             className="guide-engineer-img"
             priority
+            unoptimized
           />
           <span className="engineer-ground-glow" />
         </span>

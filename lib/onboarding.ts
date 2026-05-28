@@ -75,9 +75,49 @@ export function resetAllGuides(userId?: string | null) {
   localStorage.removeItem(storageKey(userId))
 }
 
+const FORCE_DASHBOARD_KEY = 'constructqa-alex-dashboard'
+
+/** Set when sign-up completes so the dashboard tour runs for the new account. */
+export function queueDashboardGuideForNewUser() {
+  if (typeof window === 'undefined') return
+  sessionStorage.setItem(FORCE_DASHBOARD_KEY, '1')
+}
+
+function consumeForceDashboardGuide(): boolean {
+  if (typeof window === 'undefined') return false
+  if (sessionStorage.getItem(FORCE_DASHBOARD_KEY) !== '1') return false
+  sessionStorage.removeItem(FORCE_DASHBOARD_KEY)
+  return true
+}
+
 /** True when account was created recently (first-time / new-user tour). */
-export function isRecentlyCreatedAccount(createdAt: Date | null | undefined): boolean {
-  if (!createdAt) return false
-  const ageMs = Date.now() - createdAt.getTime()
+export function isRecentlyCreatedAccount(createdAt: Date | number | null | undefined): boolean {
+  if (createdAt == null) return false
+  const ms =
+    createdAt instanceof Date
+      ? createdAt.getTime()
+      : typeof createdAt === 'number'
+        ? createdAt
+        : new Date(createdAt).getTime()
+  if (Number.isNaN(ms)) return false
+  const ageMs = Date.now() - ms
   return ageMs >= 0 && ageMs < 14 * 24 * 60 * 60 * 1000
+}
+
+/** Whether Alex should appear for this scene and user. */
+export function shouldShowGuide(
+  scene: GuideScene,
+  userId: string | null | undefined,
+  createdAt?: Date | number | null
+): boolean {
+  if (scene === 'dashboard') {
+    if (!userId) return false
+    if (consumeForceDashboardGuide()) return true
+    if (isRecentlyCreatedAccount(createdAt)) {
+      return !isGuideComplete(scene, userId)
+    }
+    return !isGuideComplete(scene, userId)
+  }
+
+  return !isGuideComplete(scene, userId ?? 'guest')
 }
