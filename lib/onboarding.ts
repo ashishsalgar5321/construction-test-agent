@@ -1,4 +1,6 @@
 const STORAGE_PREFIX = 'constructqa-onboarding-v1'
+const SESSION_DONE_PREFIX = 'constructqa-guide-session-done-'
+const FORCE_DASHBOARD_KEY = 'constructqa-alex-dashboard'
 
 export type GuideScene = 'home' | 'sign-in' | 'sign-up' | 'dashboard'
 
@@ -36,88 +38,161 @@ function writeState(state: OnboardingState, userId?: string | null) {
   localStorage.setItem(storageKey(userId), JSON.stringify(state))
 }
 
-export function isGuideComplete(scene: GuideScene, userId?: string | null): boolean {
-  const s = readState(userId)
+function sceneFlag(state: OnboardingState, scene: GuideScene): boolean {
   switch (scene) {
     case 'home':
-      return s.home
+      return state.home
     case 'sign-in':
-      return s.signIn
+      return state.signIn
     case 'sign-up':
-      return s.signUp
+      return state.signUp
     case 'dashboard':
-      return s.dashboard
+      return state.dashboard
     default:
       return false
   }
 }
 
-export function markGuideComplete(scene: GuideScene, userId?: string | null) {
-  const s = readState(userId)
+function setSceneFlag(state: OnboardingState, scene: GuideScene, value: boolean) {
   switch (scene) {
     case 'home':
-      s.home = true
+      state.home = value
       break
     case 'sign-in':
-      s.signIn = true
+      state.signIn = value
       break
     case 'sign-up':
-      s.signUp = true
+      state.signUp = value
       break
     case 'dashboard':
-      s.dashboard = true
+      state.dashboard = value
       break
   }
-  writeState(s, userId)
+}
+
+function sessionDoneKey(scene: GuideScene): string {
+  return `${SESSION_DONE_PREFIX}${scene}`
+}
+
+function isSessionGuideComplete(scene: GuideScene): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return sessionStorage.getItem(sessionDoneKey(scene)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function markSessionGuideComplete(scene: GuideScene) {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.setItem(sessionDoneKey(scene), '1')
+  } catch {
+    /* private mode */
+  }
+}
+
+/** Normalize Clerk createdAt (Date, ms, or seconds). */
+export function toCreatedAtMs(createdAt: Date | number | string | null | undefined): number | null {
+  if (createdAt == null) return null
+  if (createdAt instanceof Date) {
+    const ms = createdAt.getTime()
+    return Number.isNaN(ms) ? null : ms
+  }
+  if (typeof createdAt === 'number') {
+    const ms = createdAt < 1e12 ? createdAt * 1000 : createdAt
+    return Number.isNaN(ms) ? null : ms
+  }
+  const ms = new Date(createdAt).getTime()
+  return Number.isNaN(ms) ? null : ms
+}
+
+export function isGuideComplete(scene: GuideScene, userId?: string | null): boolean {
+  if (scene === 'dashboard') {
+    return sceneFlag(readState(userId), scene)
+  }
+
+  if (isSessionGuideComplete(scene)) return true
+
+  const uid = userId?.trim()
+  if (uid) {
+    return sceneFlag(readState(uid), scene)
+  }
+
+  return false
+}
+
+export function markGuideComplete(scene: GuideScene, userId?: string | null) {
+  if (scene !== 'dashboard') {
+    markSessionGuideComplete(scene)
+  }
+
+  const uid = scene === 'dashboard' ? userId?.trim() : userId?.trim() || 'guest'
+  if (!uid) return
+
+  const s = readState(uid)
+  setSceneFlag(s, scene, true)
+  writeState(s, uid)
+
+  if (scene === 'dashboard') {
+    clearForceDashboardGuide()
+  }
 }
 
 export function resetAllGuides(userId?: string | null) {
   localStorage.removeItem(storageKey(userId))
 }
 
-const FORCE_DASHBOARD_KEY = 'constructqa-alex-dashboard'
-
 /** Set when sign-up completes so the dashboard tour runs for the new account. */
 export function queueDashboardGuideForNewUser() {
   if (typeof window === 'undefined') return
-  sessionStorage.setItem(FORCE_DASHBOARD_KEY, '1')
+  try {
+    sessionStorage.setItem(FORCE_DASHBOARD_KEY, '1')
+  } catch {
+    /* private mode */
+  }
 }
 
-function consumeForceDashboardGuide(): boolean {
+export function isForceDashboardGuidePending(): boolean {
   if (typeof window === 'undefined') return false
-  if (sessionStorage.getItem(FORCE_DASHBOARD_KEY) !== '1') return false
-  sessionStorage.removeItem(FORCE_DASHBOARD_KEY)
-  return true
+  try {
+    return sessionStorage.getItem(FORCE_DASHBOARD_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function clearForceDashboardGuide() {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.removeItem(FORCE_DASHBOARD_KEY)
+  } catch {
+    /* private mode */
+  }
 }
 
 /** True when account was created recently (first-time / new-user tour). */
-export function isRecentlyCreatedAccount(createdAt: Date | number | null | undefined): boolean {
-  if (createdAt == null) return false
-  const ms =
-    createdAt instanceof Date
-      ? createdAt.getTime()
-      : typeof createdAt === 'number'
-        ? createdAt
-        : new Date(createdAt).getTime()
-  if (Number.isNaN(ms)) return false
+export function isRecentlyCreatedAccount(createdAt: Date | number | string | null | undefined): boolean {
+  const ms = toCreatedAtMs(createdAt)
+  if (ms == null) return false
   const ageMs = Date.now() - ms
   return ageMs >= 0 && ageMs < 14 * 24 * 60 * 60 * 1000
 }
 
-/** Whether Alex should appear for this scene and user. */
+/** Whether Alex should appear for this scene and user (does not consume session flags). */
 export function shouldShowGuide(
   scene: GuideScene,
   userId: string | null | undefined,
-  createdAt?: Date | number | null
+  createdAt?: Date | number | string | null
 ): boolean {
   if (scene === 'dashboard') {
     if (!userId) return false
-    if (consumeForceDashboardGuide()) return true
+    if (isForceDashboardGuidePending()) return true
     if (isRecentlyCreatedAccount(createdAt)) {
       return !isGuideComplete(scene, userId)
     }
     return !isGuideComplete(scene, userId)
   }
 
-  return !isGuideComplete(scene, userId ?? 'guest')
+  return !isGuideComplete(scene, userId ?? undefined)
 }

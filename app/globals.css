@@ -2755,14 +2755,14 @@ a.nav-pill {
 .guide-overlay {
   position: fixed;
   inset: 0;
-  z-index: 99998;
+  z-index: 2147483644;
   background: rgba(2, 2, 10, 0.55);
   pointer-events: none;
   animation: guide-fade-in 0.35s ease;
 }
 .guide-spotlight {
   position: fixed;
-  z-index: 99999;
+  z-index: 2147483645;
   border-radius: 12px;
   box-shadow: 0 0 0 9999px rgba(2, 2, 10, 0.72);
   pointer-events: none;
@@ -2771,11 +2771,11 @@ a.nav-pill {
 }
 .guide-highlight-target {
   position: relative;
-  z-index: 100000 !important;
+  z-index: 2147483646 !important;
 }
 .guide-mount {
   position: fixed;
-  z-index: 100001;
+  z-index: 2147483647;
   pointer-events: auto;
   animation: guide-slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -2,7 +2,7 @@
 
 import { SignUp, useAuth } from '@clerk/nextjs'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { clerkSignUpProps } from '@/lib/clerk-auth-config'
 import { clerkGuestAppearance } from '@/lib/clerk-guest-appearance'
 import { queueDashboardGuideForNewUser } from '@/lib/onboarding'
@@ -14,9 +14,13 @@ export default function SignUpFlowRouter() {
 
   const isSignUpPath = pathname.includes('/sign-up')
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isLoaded || !isSignedIn || !isSignUpPath) return
     queueDashboardGuideForNewUser()
+  }, [isLoaded, isSignedIn, isSignUpPath])
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !isSignUpPath) return
     const id = window.setTimeout(() => {
       router.replace('/dashboard')
     }, 1800)
